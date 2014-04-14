@@ -1,0 +1,21 @@
+package main
+
+import (
+	"fmt"
+	"net/http"
+	"strconv"
+)
+
+func handler(w http.ResponseWriter, r *http.Request) {
+	input := r.URL.Path[1:]
+	if i, e := strconv.Atoi(input); e != nil {
+		fmt.Fprintf(w, "Hi there, I love %s!", input)
+	} else {
+		fmt.Fprintf(w, "Hi, %d square is %d", i, i*i)
+	}
+}
+
+func main() {
+	http.HandleFunc("/", handler)
+	http.ListenAndServe(":8080", nil)
+}

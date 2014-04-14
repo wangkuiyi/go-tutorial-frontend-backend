@@ -1,0 +1,33 @@
+package main
+
+import (
+	"expvar"
+	"github.com/wangkuiyi/square"
+	"log"
+	"net"
+	"net/http"
+	"net/rpc"
+)
+
+var accessCount *expvar.Int
+
+type BackendService struct{}
+
+func (s *BackendService) Square(i int, r *int) error {
+	*r = square.Square(i)
+	accessCount.Add(1)
+	return nil
+}
+
+func main() {
+	accessCount = expvar.NewInt("accessCount")
+
+	s := new(BackendService)
+	rpc.Register(s)
+	rpc.HandleHTTP()
+	l, e := net.Listen("tcp", ":1234")
+	if e != nil {
+		log.Fatal("listen error:", e)
+	}
+	http.Serve(l, nil)
+}

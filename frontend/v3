@@ -1,0 +1,37 @@
+package main
+
+import (
+	"fmt"
+	"log"
+	"net/http"
+	"net/rpc"
+	"strconv"
+)
+
+var client *rpc.Client
+
+func handler(w http.ResponseWriter, r *http.Request) {
+	input := r.URL.Path[1:]
+	if i, e := strconv.Atoi(input); e != nil {
+		fmt.Fprintf(w, "Hi there, I love %s!", input)
+	} else {
+		var r int
+		e = client.Call("BackendService.Square", i, &r)
+		if e != nil {
+			log.Fatalf("Failed RPC call: %v", e)
+		}
+		fmt.Fprintf(w, "Hi, %d square is %d", i, r)
+	}
+}
+
+func main() {
+	var e error
+	client, e = rpc.DialHTTP("tcp", ":1234")
+	if e != nil {
+		log.Fatal("dialing:", e)
+	}
+	log.Printf("Succesfully connected to backend server.")
+
+	http.HandleFunc("/", handler)
+	http.ListenAndServe(":8080", nil)
+}
